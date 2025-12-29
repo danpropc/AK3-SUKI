@@ -1,4 +1,4 @@
-name: 编译一加ACE5内核
+name: Biên dịch Kernel Oneplus Ace 5
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ env:
   CPUD: 'pineapple'
   ANDROID_VERSION: 'android14'
   KERNEL_VERSION: '6.1'
-  KERNEL_NAME: '-android14-11-o-g666666666666'
+  KERNEL_NAME: '-android14-11-o-QyanKernel'
   VFS: 'true' #启用 true  不启用 false
   BUILD_METHOD: 'gki'
   SUSFS_CI: 'true'
@@ -25,7 +25,7 @@ jobs:
     outputs:
       ksuver: ${{ steps.ksu_version.outputs.ksuver }}
     steps:
-      - name: 最大化建筑空间
+      - name: Tối đa hoá không gian build
         uses: easimon/maximize-build-space@master
         with:
           root-reserve-mb: 8192
@@ -36,18 +36,18 @@ jobs:
           remove-haskell: 'true'
           remove-codeql: 'true'
 
-      - name: 配置 Git
+      - name: Cấu hình Git
         run: |
           git config --global user.name "ychenxuan"
           git config --global user.email "3494167979@qq.com"
 
-      - name: 安装依赖项
+      - name: Cài đặt tiến trình cần thiết
         run: |
 
           sudo apt update && sudo apt upgrade -y
           sudo apt install -y python3 git curl
 
-      - name: 显示所选配置
+      - name: Hiển thị cấu hình đã chọn
         run: |
           echo "Selected CPU: ${{ env.CPU }}"
           echo "Selected FEIL: ${{ env.FEIL }}"
@@ -61,13 +61,13 @@ jobs:
           echo "Selected KPM: ${{ env.KPM }}"
           echo "Selected KERNEL_NAME: ${{ env.KERNEL_NAME }}"
 
-      - name: 安装软件仓库工具
+      - name: Cài đặt công cụ
         run: |
           curl https://storage.googleapis.com/git-repo-downloads/repo > ~/repo
           chmod a+x ~/repo
           sudo mv ~/repo /usr/local/bin/repo
 
-      - name: 初始化版本库并同步
+      - name: Khởi tạo và đồng bộ hoá dữ liệu
         run: |
           mkdir kernel_workspace && cd kernel_workspace
           repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/${{ env.CPU }} -m ${{ env.FEIL }}.xml --depth=1
@@ -81,7 +81,7 @@ jobs:
           rm kernel_platform/common/android/abi_gki_protected_exports_* || echo "No protected exports!"
           rm kernel_platform/msm-kernel/android/abi_gki_protected_exports_* || echo "No protected exports!"
 
-      - name:  删除 -dirty 后缀
+      - name:  Xoá hậu tố -dirty 
         run: |
           cd kernel_workspace/kernel_platform
           sed -i 's/ -dirty//g' common/scripts/setlocalversion
@@ -91,11 +91,11 @@ jobs:
           git add -A
           git commit -m "Force remove -dirty suffix from kernel version"
 
-      - name: 添加 SukiSU-Ultra
+      - name: Trình quản lý QyanSU-Ultra
         id: ksu_version
         run: |
           cd kernel_workspace/kernel_platform
-          curl -LSs "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s susfs-main
+          curl -LSs "https://raw.githubusercontent.com/danpropc/QyanSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s susfs-main
           cd ./KernelSU
           KSU_VERSION=$(expr $(/usr/bin/git rev-list --count main) "+" 10606)
           echo "KSUVER=$KSU_VERSION" >> $GITHUB_ENV
@@ -103,7 +103,7 @@ jobs:
           export KSU_VERSION=$KSU_VERSION
           sed -i "s/DKSU_VERSION=12800/DKSU_VERSION=$KSU_VERSION/" kernel/Makefile
 
-      - name: 应用 SUSFS 修补程序 SukiSU-Ultra
+      - name: Bản vá SUSFS Tên ứng dụng QyanSU-Ultra
         run: |
           cd kernel_workspace
           git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}
@@ -130,13 +130,13 @@ jobs:
           cd ./common
           patch -p1 < 50_add_susfs_in_gki-${{ env.ANDROID_VERSION }}-${{ env.KERNEL_VERSION }}.patch || true
 
-      - name: 应用 Hide Stuff 修补程序
+      - name: Áp dụng bản vá Hide Stuff
         run: |
           cd kernel_workspace/kernel_platform/common
           cp ../../SukiSU_patch/69_hide_stuff.patch ./
           patch -p1 -F 3 < 69_hide_stuff.patch
 
-      - name: 应用vfs补丁
+      - name: Áp dụng bán vá vfs
         run: |
           cd kernel_workspace/kernel_platform/common
           if [ "${{ env.VFS }}" = "true" ]; then
@@ -146,7 +146,7 @@ jobs:
           echo "vfs_patch完成"
           fi
 
-      - name: 应用LZ4KD补丁
+      - name: Áp dụng bản vá LZ4KD
         run: |
           cd kernel_workspace/kernel_platform/common
           if [ "${{ env.ZRAM }}" = "true" ]; then
@@ -156,7 +156,7 @@ jobs:
             echo '完成LZ4KD补丁'
           fi
 
-      - name: 添加配置设置
+      - name: Thêm các cấu hình
         run: |
           cd kernel_workspace/kernel_platform
           CONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
@@ -258,13 +258,13 @@ jobs:
 
         
 
-      - name: 添加制作名称
+      - name: Thêm tên build
         run: |
           cd kernel_workspace/kernel_platform
           sed -i "/stable_scmversion_cmd/s/-maybe-dirty//g" ./build/kernel/kleaf/impl/stamp.bzl
           sed -i 's|echo "\$res"|echo "'"$(echo "${{ env.KERNEL_NAME }}" | sed 's/[\&/]/\\&/g')"'"|g' ./common/scripts/setlocalversion
            
-      - name: 构建内核
+      - name: Tên Kernel
         run: |
           cd kernel_workspace
 
@@ -273,7 +273,7 @@ jobs:
           else
             LTO=thin SYSTEM_DLKM_RE_SIGN=0 BUILD_SYSTEM_DLKM=0 KMI_SYMBOL_LIST_STRICT_MODE=0 ./kernel_platform/oplus/build/oplus_build_kernel.sh ${{ env.CPUD }} gki
           fi
-      - name: 克隆 AnyKernel3
+      - name: Sao chép AnyKernel3
         run: |
           git clone https://github.com/Numbersf/AnyKernel3 --depth=1
           rm -rf ./AnyKernel3/.git
@@ -332,7 +332,7 @@ jobs:
           fi
 
 
-      - name: 启用KPM
+      - name: Bật KPM
         run: |
          if [ "${{ env.KPM }}" = "true" ]; then
           cd /home/runner/work/Action_OnePlus_MKSU_SUSFS/Action_OnePlus_MKSU_SUSFS/kernel_workspace/kernel_platform/out/msm-kernel-${{ env.CPUD }}-${{ env.BUILD_METHOD }}/dist
@@ -344,7 +344,7 @@ jobs:
           cp Image $GITHUB_WORKSPACE/AnyKernel3/Image
          fi
 
-      - name: 下载 SUSFS 模块（CI）
+      - name: Tải xuống module SUSFS（CI）
         run: |
          
 
@@ -367,7 +367,7 @@ jobs:
           fi
           
 
-      - name: 下载 SUSFS 模块（Release）
+      - name: Tải xuống module SUSFS（Release）
         run: |
           
           if [ "${{ env.SUSFS_CI }}" = "false" ]; then
@@ -375,12 +375,12 @@ jobs:
           cp ksu_module_susfs_1.5.2+.zip ./AnyKernel3/ksu_module_susfs_1.5.2+_Release.zip
           fi
           
-      - name: 设置 suffix
+      - name: Đặt suffix
         id: suffix
         run: |
           echo "value=${{ env.KPM == 'true' && '_KPM' || '' }}${{ env.VFS == 'true' && '_VFS' || '' }}${{ env.ZRAM == 'true' && '_LZ4KD' || '' }}" >> $GITHUB_OUTPUT
 
-      - name: 从FEIL中删除 _uv 后缀
+      - name: Xoá hậu tối FEIL khỏi _uv
         id: feil_clean
         run: |
           clean_feil="${{ env.FEIL }}"
@@ -388,7 +388,7 @@ jobs:
           clean_feil="${clean_feil%_u}"  # 去掉结尾的 _u（如果有）
           echo "value=$clean_feil" >> $GITHUB_OUTPUT
 
-      - name: 打包 AnyKernel3 (ZIP)
+      - name: Đóng gói AnyKernel3 (ZIP)
         run: |
           cd $GITHUB_WORKSPACE/AnyKernel3
           zip -r ../AnyKernel3_KernelSU_${{ env.KSUVER }}_${{ env.FEIL }}.zip ./*
@@ -399,7 +399,7 @@ jobs:
        #   cd $GITHUB_WORKSPACE/kernel_workspace
       #    zip -r ../Image_KernelSU_${{ env.KSUVER }}_${{ env.FEIL }}.zip ./*
 
-      - name: 上传 ZIP 工件
+      - name: Tên tệp ZIP đã tải lên
         uses: actions/upload-artifact@v4
         with:
           name: Kernel_ZIP_Artifacts
@@ -416,27 +416,27 @@ jobs:
       actions: read
       
     steps:
-      - name: 下载 ZIP 工件
+      - name: Tải file ZIP
         uses: actions/download-artifact@v4
         with:
           name: Kernel_ZIP_Artifacts
           path: ./release_zips
          
-      - name: 创建发布
+      - name: Tạo tên phiên bản
         id: create_release
         uses: softprops/action-gh-release@v1
         with:
           tag_name: "build-${{ github.run_id }}"
           name: "OnePlus_ACE5 Build ${{ github.run_number }}"
           body: |
-            每日自动编译 SukiSU-Ultra 内核
-            - 机型： 一加ACE5
-            - 特性：MKSU+SUSFS+VFS+KPM+LZ4K
-            - 编译时间: ${{ github.event.repository.updated_at }}
-            - 内核版本: ${{ needs.build.outputs.ksuver }}
-            - 推荐管理器：[SukiSU-Ultra](https://github.com/ShirkNeko/SukiSU-Ultra/releases)
-            - 如果构建的内核版本没变，不必更新！
-            - 使用 AnyKernel3/Recovery/TWRP 刷入
+            Biên dịch hàng ngày QyanSU-Ultra
+            - Thiết bị： Oneplus Ace 5
+            - Tính năng：MKSU+SUSFS+VFS+KPM+LZ4K
+            - Thời gian biên dịch: ${{ github.event.repository.updated_at }}
+            - Phiên bản Kernel: ${{ needs.build.outputs.ksuver }}
+            - Trình quản lý đề xuất：[QyanSU-Ultra](https://github.com/ShirkNeko/SukiSU-Ultra/releases)
+            - Nếu phiên bản Kernel của bạn không thay đổi thì không cần phải cập nhật!
+            - Flash bằng AnyKernel3/Recovery/TWRP
             
           draft: false
           prerelease: false
@@ -444,7 +444,7 @@ jobs:
             release_zips/AnyKernel3_KernelSU_*.zip
             release_zips/Image_KernelSU_*.zip
 
-      - name: 清理旧版本
+      - name: Dọn dẹp phiên bản cũ
         uses: dev-drprasad/delete-older-releases@v0.3.4
         continue-on-error: true
         timeout-minutes: 5
